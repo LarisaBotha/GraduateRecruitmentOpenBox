@@ -49,11 +49,13 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {inventory name}: {quantity}
 
+            //Declarations
             int amountOfInventory = repo.AllInventory.Count;
             int[] quantitiesTaken = new int[amountOfInventory];
             int greatestIndex = 0;
             String greatestName = "";
 
+            //Initialisations
             for(int i=0;i<amountOfInventory;i++){
                 quantitiesTaken[i] = 0;
             }
@@ -64,10 +66,12 @@ namespace GraduateRecruitment.ConsoleApp
                 {
 
                     foreach(var stock in item.FridgeStockTakeList){
-                        quantitiesTaken[stock.Inventory.Id-1] += stock.Quantity.Taken;
+                        int quantityIndex = stock.Inventory.Id-1;
 
-                        if(quantitiesTaken[stock.Inventory.Id-1] > quantitiesTaken[greatestIndex]){
-                            greatestIndex = stock.Inventory.Id-1;
+                        quantitiesTaken[quantityIndex] += stock.Quantity.Taken;
+
+                        if(quantitiesTaken[quantityIndex] > quantitiesTaken[greatestIndex]){
+                            greatestIndex = quantityIndex;
                             greatestName = stock.Inventory.Name;
                         }
 
@@ -90,6 +94,11 @@ namespace GraduateRecruitment.ConsoleApp
 
         }
 
+        /* Assumptions:
+            -last recorded does not refer to the las fully recorded month
+            -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
+            -the stock is taken accurately/correctly/consistently
+        */
         private static void Question3(OpenBarRepository repo)
         {
             Console.WriteLine("Question 3: Which dates did we run out of Savanna Dry for the last recorded month?");
@@ -97,11 +106,9 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {year}/{month}/{day}
 
-            int amountOfSD = 0;
-
-            //Assuming it does not have to be a fully recorded month
-            //Assuming records in ascending date order 
-            var lastDate = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
+            //Declarations and Initialisations
+            int amountOfSD = 0;         //SD := Savanna Dry
+            var lastDateRecorded = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
 
             foreach( var item in repo.AllOpenBarRecords ){
 
@@ -109,6 +116,8 @@ namespace GraduateRecruitment.ConsoleApp
 
                     if(stock.Inventory.Name.CompareTo("Savanna Dry")==0)
                     {
+                        var date = item.Date;
+                        
                         amountOfSD += stock.Quantity.Added;
                         amountOfSD -= stock.Quantity.Taken;
 
@@ -118,8 +127,8 @@ namespace GraduateRecruitment.ConsoleApp
                             return;
                         }*/
 
-                        if(amountOfSD == 0 && item.Date.Month == lastDate.Month && item.Date.Year == lastDate.Year){
-                            Console.WriteLine(item.Date.Year + "/" + item.Date.Month + "/" + item.Date.Day);
+                        if(amountOfSD == 0 && date.Month == lastDateRecorded.Month && date.Year == lastDateRecorded.Year){
+                            Console.WriteLine(date.Year + "/" + date.Month + "/" + date.Day);
                         }
 
                     }
@@ -127,6 +136,10 @@ namespace GraduateRecruitment.ConsoleApp
             }
         }
 
+        /* Assumptions:
+            -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
+            -the stock is taken accurately/correctly/consistently
+        */
         private static void Question4(OpenBarRepository repo)
         {
             Console.WriteLine("Question 4: How many Fanta Oranges do we need to order next week?");
@@ -134,13 +147,15 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {quanity}
 
+            //Declarations and Initialisations
             int amountOfFO = 0;
             int amountOfFOTaken = 0;       
             int weekCount = 0;
-
-            var currDay = repo.AllOpenBarRecords[0].DayOfWeek;
             int daysTillSaterday = 0;
-
+            int avgFOUsedPerWeek = 0;
+            int amountFOToOrder = 0;
+            var currDay = repo.AllOpenBarRecords[0].DayOfWeek;
+            
             switch(currDay){
                 case DayOfWeek.Monday: 
                     daysTillSaterday = 5;
@@ -167,14 +182,12 @@ namespace GraduateRecruitment.ConsoleApp
 
             var currEndOfWeekDate = repo.AllOpenBarRecords[0].Date.AddDays(daysTillSaterday);
             
-            //Assuming I do not have to take time of year into consideration
-            //Assuming records in ascending date order 
             foreach( var item in repo.AllOpenBarRecords){
 
                     if(item.Date>=currEndOfWeekDate){
                         weekCount++;
-                        //Incase stock haven't changed or been recorded for a few days/weeks (#Covid)
-                        while(currEndOfWeekDate<=item.Date){
+                        
+                        while(currEndOfWeekDate<=item.Date){                    //Incase stock haven't changed or been recorded for a few days/weeks (#Covid)
                             currEndOfWeekDate = currEndOfWeekDate.AddDays(7);
                         }
                     }
@@ -198,8 +211,8 @@ namespace GraduateRecruitment.ConsoleApp
 
             }
 
-            int avgFOUsedPerWeek = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfFOTaken/weekCount); 
-            int amountFOToOrder = avgFOUsedPerWeek - amountOfFO;
+            avgFOUsedPerWeek = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfFOTaken/weekCount); 
+            amountFOToOrder = avgFOUsedPerWeek - amountOfFO;
 
             if(amountFOToOrder<0)
             amountFOToOrder = 0;
@@ -207,6 +220,10 @@ namespace GraduateRecruitment.ConsoleApp
             Console.WriteLine(amountFOToOrder);
         }
 
+        /* Assumptions:
+            -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
+            -the stock is taken accurately/correctly/consistently
+        */
         private static void Question5(OpenBarRepository repo)
         {
             Console.WriteLine("Question 5: How much do we need to budget next month for Ceres Orange Juice?");
@@ -214,21 +231,28 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  R{amount}
 
+            //Declarations and Initialisations
+            int avgFOUsedPerMonth = 0;
+            int amountCOJToOrder = 0;
             int amountOfCOJ = 0;
             int amountOfCOJTaken = 0;       
-            int monthCount = 0;
-
+            int monthCount = 0;   
+            decimal COJCost = 0;
             int currDay = repo.AllOpenBarRecords[0].Date.Day;
             var currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
-            
-            //Assuming I do not have to take time of year into consideration
-            //Assuming records in ascending date order 
+
+            decimal COJPrice = 0;
+            foreach (var beverage in repo.AllInventory){
+                if(beverage.Name.CompareTo("Ceres Orange Juice")==0)
+                    COJPrice = beverage.Price;
+            }
+
             foreach( var item in repo.AllOpenBarRecords){
 
                     if(item.Date>=currEndOfMonthDate){
                         monthCount++;
-                        //Incase stock haven't changed or been recorded for a few days/weeks/months (#Covid)
-                        while(currEndOfMonthDate<=item.Date){
+                        
+                        while(currEndOfMonthDate<=item.Date){                       //Incase stock haven't changed or been recorded for a few days/weeks/months (#Covid)
                             currEndOfMonthDate = currEndOfMonthDate.AddMonths(1);
                         }
                     }
@@ -251,23 +275,22 @@ namespace GraduateRecruitment.ConsoleApp
                     }            
             }
 
-            int avgFOUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfCOJTaken/monthCount); 
-            int amountCOJToOrder = avgFOUsedPerMonth - amountOfCOJ;
+            avgFOUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfCOJTaken/monthCount); 
+            amountCOJToOrder = avgFOUsedPerMonth - amountOfCOJ;
 
             if(amountCOJToOrder<0)
             amountCOJToOrder = 0;
 
-            decimal COJPrice = 0;
-            foreach (var beverage in repo.AllInventory){
-                if(beverage.Name.CompareTo("Ceres Orange Juice")==0)
-                    COJPrice = beverage.Price;
-            }
-
-            decimal COJCost = amountCOJToOrder*COJPrice;
+            COJCost = amountCOJToOrder*COJPrice;
 
             Console.WriteLine("R" +COJCost);
         }
 
+        /* Assumptions:
+            -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
+            -the stock is taken accurately/correctly/consistently
+            -one does not have to take time of year into consideration when making the estimate
+        */
         private static void Question6(OpenBarRepository repo)
         {
             Console.WriteLine("Question 6: How much do we need to budget for next month to restock the fridge?");
@@ -289,28 +312,29 @@ namespace GraduateRecruitment.ConsoleApp
 
             decimal totalCost = 0;
             int monthCount = 0;
+            int avgUsedPerMonth = 0;
+            int quanityToOrder = 0;
             int currDay = repo.AllOpenBarRecords[0].Date.Day;
             var currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
             
-            //Assuming I do not have to take time of year into consideration
-            //Assuming records in ascending date order 
             foreach( var item in repo.AllOpenBarRecords){
 
                     if(item.Date>=currEndOfMonthDate){
                         monthCount++;
-                        //Incase stock haven't changed or been recorded for a few days/weeks/months (#Covid)
-                        while(currEndOfMonthDate<=item.Date){
+                        
+                        while(currEndOfMonthDate<=item.Date){                       //Incase stock haven't changed or been recorded for a few days/weeks/months (#Covid)
                             currEndOfMonthDate = currEndOfMonthDate.AddMonths(1);
                         }
                     }
 
                     foreach(var stock in item.FridgeStockTakeList){
+                        int quanitiesIndex = stock.Inventory.Id-1;
 
-                        quantitiesTaken[stock.Inventory.Id-1] += stock.Quantity.Taken;
-                        quantities[stock.Inventory.Id-1] += stock.Quantity.Added;
-                        quantities[stock.Inventory.Id-1] -= stock.Quantity.Taken;
+                        quantitiesTaken[quanitiesIndex] += stock.Quantity.Taken;
+                        quantities[quanitiesIndex] += stock.Quantity.Added;
+                        quantities[quanitiesIndex] -= stock.Quantity.Taken;
 
-                        /*if(quantities[stock.Inventory.Id-1]<0) {
+                        /*if(quantities[quanitiesIndex]<0) {
                             Console.WriteLine("Error: Stock recorded incorrectly!");
                             return;
                         }*/
@@ -319,12 +343,14 @@ namespace GraduateRecruitment.ConsoleApp
             }
 
             foreach (var beverage in repo.AllInventory){
-                int avgUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(quantitiesTaken[beverage.Id-1]/monthCount);
-                int quanityToOrder = avgUsedPerMonth - quantities[beverage.Id-1];
+                int quanitiesIndex = beverage.Id-1;
+
+                avgUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(quantitiesTaken[quanitiesIndex]/monthCount);
+                quanityToOrder = avgUsedPerMonth - quantities[quanitiesIndex];
 
                 if(quanityToOrder<0)
                 quanityToOrder = 0;
-                
+
                 totalCost += beverage.Price* quanityToOrder;
             }
 
