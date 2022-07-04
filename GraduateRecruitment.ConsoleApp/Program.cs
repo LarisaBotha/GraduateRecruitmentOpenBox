@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using GraduateRecruitment.ConsoleApp.Data;
-using System.Collections.Generic;
 
 [assembly: InternalsVisibleTo("GraduateRecruitment.UnitTests")]
 
@@ -96,7 +95,7 @@ namespace GraduateRecruitment.ConsoleApp
             int amountOfSD = 0;
 
             //Assuming it does not have to be a fully recorded month
-            //Assuming Openbar records in ascending date order 
+            //Assuming records in ascending date order 
             var lastDate = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
 
             foreach( var item in repo.AllOpenBarRecords ){
@@ -128,6 +127,75 @@ namespace GraduateRecruitment.ConsoleApp
 
             // Write your answer to the console here.
             // Format e.g.  {quanity}
+
+            int amountOfFO = 0;
+            int amountOfFOTaken = 0;       
+            int weekCount = 0;
+
+            var currDay = repo.AllOpenBarRecords[0].DayOfWeek;
+            int daysTillSaterday = 0;
+
+            switch(currDay){
+                case DayOfWeek.Monday: 
+                    daysTillSaterday = 5;
+                break;
+                case DayOfWeek.Tuesday: 
+                    daysTillSaterday = 4;
+                break;
+                case DayOfWeek.Wednesday: 
+                    daysTillSaterday = 3;
+                break;
+                case DayOfWeek.Thursday: 
+                    daysTillSaterday = 2;
+                break;
+                case DayOfWeek.Friday: 
+                    daysTillSaterday = 1;
+                break;
+                case DayOfWeek.Saturday: 
+                    daysTillSaterday = 0;
+                break;
+                case DayOfWeek.Sunday: 
+                    daysTillSaterday = 6;
+                break;
+            }
+
+            var currEndOfWeekDate = repo.AllOpenBarRecords[0].Date.AddDays(daysTillSaterday);
+            
+            //Assuming I do not have to take time of year into consideration
+            //Assuming records in ascending date order 
+            foreach( var item in repo.AllOpenBarRecords){
+
+                    if(item.Date>=currEndOfWeekDate){
+                        weekCount++;
+                        //Incase stock haven't changed or been recorded for a few days/weeks (#Covid)
+                        while(currEndOfWeekDate<=item.Date){
+                            currEndOfWeekDate = currEndOfWeekDate.AddDays(7);
+                        }
+                    }
+
+                    foreach(var stock in item.FridgeStockTakeList){
+                        if(stock.Inventory.Name.CompareTo("Fanta Orange") == 0)
+                        {
+                            amountOfFOTaken += stock.Quantity.Taken;
+                            amountOfFO += stock.Quantity.Added;
+                            amountOfFO -= stock.Quantity.Taken;
+
+                            /*if(amountOfFO < 0)
+                            {
+                                Console.WriteLine("Error: Stock recorded incorrectly!");
+                                return;
+                            }*/
+                        }
+                    }            
+            }
+
+            int avgFOUsedPerWeek = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfFOTaken/weekCount); 
+            int amountFOToOrder = avgFOUsedPerWeek - amountOfFO;
+
+            if(amountFOToOrder<0)
+            amountFOToOrder = 0;
+
+            Console.WriteLine(amountFOToOrder);
         }
 
         private static void Question5(OpenBarRepository repo)
