@@ -1,11 +1,26 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using GraduateRecruitment.ConsoleApp.Data;
+using System.Collections.Generic;
 
 [assembly: InternalsVisibleTo("GraduateRecruitment.UnitTests")]
 
 namespace GraduateRecruitment.ConsoleApp
 {
+    class GreatestInfo {
+                public int[] quantities;
+                public int greatestIndex = 0;
+                public String greatestName = "";
+
+                public GreatestInfo(int length){
+                    quantities = new int[length];
+
+                    for(int i=0;i<length;i++){
+                    quantities[i] = 0;
+                    }
+                }
+    }
+
     internal class Program
     {
         internal static void Main(string[] args)
@@ -35,22 +50,22 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {inventory name}: {quantity}
 
-            int length = repo.AllInventory.Count;
-            int[] quantities = new int[length];
+            int amountOfInventory = repo.AllInventory.Count;
+            int[] quantitiesTaken = new int[amountOfInventory];
             int greatestIndex = 0;
             String greatestName = "";
 
-            for(int i=0;i<length;i++){
-                quantities[i] = 0;
+            for(int i=0;i<amountOfInventory;i++){
+                quantitiesTaken[i] = 0;
             }
 
             foreach( var item in repo.AllOpenBarRecords){
                 if(item.DayOfWeek == DayOfWeek.Wednesday)
                 {
                     foreach(var stock in item.FridgeStockTakeList){
-                        quantities[stock.Inventory.Id-1] += stock.Quantity.Taken;
+                        quantitiesTaken[stock.Inventory.Id-1] += stock.Quantity.Taken;
 
-                        if(quantities[stock.Inventory.Id-1] > quantities[greatestIndex]){
+                        if(quantitiesTaken[stock.Inventory.Id-1] > quantitiesTaken[greatestIndex]){
                             greatestIndex = stock.Inventory.Id-1;
                             greatestName = stock.Inventory.Name;
                         }
@@ -58,7 +73,7 @@ namespace GraduateRecruitment.ConsoleApp
                 }        
             }
 
-            Console.WriteLine("{" + greatestName+ "}: {" + quantities[greatestIndex] + "}");
+            Console.WriteLine(greatestName+ ": " + quantitiesTaken[greatestIndex]);
         }
 
         private static void Question2(OpenBarRepository repo)
@@ -68,6 +83,7 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {day of week}
             //              {inventory name}: {quantity}
+
         }
 
         private static void Question3(OpenBarRepository repo)
@@ -76,6 +92,34 @@ namespace GraduateRecruitment.ConsoleApp
 
             // Write your answer to the console here.
             // Format e.g.  {year}/{month}/{day}
+
+            int amountOfSD = 0;
+
+            //Assuming it does not have to be a fully recorded month
+            //Assuming Openbar records in ascending date order 
+            var lastDate = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
+
+            foreach( var item in repo.AllOpenBarRecords ){
+
+                foreach(var stock in item.FridgeStockTakeList){
+
+                    if(stock.Inventory.Name.CompareTo("Savanna Dry")==0)
+                    {
+                        amountOfSD += stock.Quantity.Added;
+                        amountOfSD -= stock.Quantity.Taken;
+
+                        /*if(amountOfSD < 0)
+                        {
+                            Console.WriteLine("Error: Stock recorded incorrectly!");
+                            return;
+                        }*/
+
+                        if(amountOfSD == 0 && item.Date.Month == lastDate.Month && item.Date.Year == lastDate.Year){
+                            Console.WriteLine(item.Date.Year + "/" + item.Date.Month + "/" + item.Date.Day);
+                        }
+                    }
+                }
+            }
         }
 
         private static void Question4(OpenBarRepository repo)
