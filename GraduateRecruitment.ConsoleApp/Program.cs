@@ -59,8 +59,10 @@ namespace GraduateRecruitment.ConsoleApp
             }
 
             foreach( var item in repo.AllOpenBarRecords){
+
                 if(item.DayOfWeek == DayOfWeek.Wednesday)
                 {
+
                     foreach(var stock in item.FridgeStockTakeList){
                         quantitiesTaken[stock.Inventory.Id-1] += stock.Quantity.Taken;
 
@@ -68,8 +70,11 @@ namespace GraduateRecruitment.ConsoleApp
                             greatestIndex = stock.Inventory.Id-1;
                             greatestName = stock.Inventory.Name;
                         }
+
                     }
-                }        
+
+                }   
+
             }
 
             Console.WriteLine(greatestName+ ": " + quantitiesTaken[greatestIndex]);
@@ -116,6 +121,7 @@ namespace GraduateRecruitment.ConsoleApp
                         if(amountOfSD == 0 && item.Date.Month == lastDate.Month && item.Date.Year == lastDate.Year){
                             Console.WriteLine(item.Date.Year + "/" + item.Date.Month + "/" + item.Date.Day);
                         }
+
                     }
                 }
             }
@@ -174,6 +180,7 @@ namespace GraduateRecruitment.ConsoleApp
                     }
 
                     foreach(var stock in item.FridgeStockTakeList){
+
                         if(stock.Inventory.Name.CompareTo("Fanta Orange") == 0)
                         {
                             amountOfFOTaken += stock.Quantity.Taken;
@@ -186,7 +193,9 @@ namespace GraduateRecruitment.ConsoleApp
                                 return;
                             }*/
                         }
-                    }            
+
+                    }   
+
             }
 
             int avgFOUsedPerWeek = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfFOTaken/weekCount); 
@@ -204,6 +213,59 @@ namespace GraduateRecruitment.ConsoleApp
 
             // Write your answer to the console here.
             // Format e.g.  R{amount}
+
+            int amountOfCOJ = 0;
+            int amountOfCOJTaken = 0;       
+            int monthCount = 0;
+
+            int currDay = repo.AllOpenBarRecords[0].Date.Day;
+            var currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
+            
+            //Assuming I do not have to take time of year into consideration
+            //Assuming records in ascending date order 
+            foreach( var item in repo.AllOpenBarRecords){
+
+                    if(item.Date>=currEndOfMonthDate){
+                        monthCount++;
+                        //Incase stock haven't changed or been recorded for a few days/weeks/months (#Covid)
+                        while(currEndOfMonthDate<=item.Date){
+                            currEndOfMonthDate = currEndOfMonthDate.AddMonths(1);
+                        }
+                    }
+
+                    foreach(var stock in item.FridgeStockTakeList){
+
+                        if(stock.Inventory.Name.CompareTo("Ceres Orange Juice") == 0)
+                        {
+                            amountOfCOJTaken += stock.Quantity.Taken;
+                            amountOfCOJ += stock.Quantity.Added;
+                            amountOfCOJ -= stock.Quantity.Taken;
+
+                            /*if(amountOfFO < 0)
+                            {
+                                Console.WriteLine("Error: Stock recorded incorrectly!");
+                                return;
+                            }*/
+                        }
+
+                    }            
+            }
+
+            int avgFOUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfCOJTaken/monthCount); 
+            int amountCOJToOrder = avgFOUsedPerMonth - amountOfCOJ;
+
+            if(amountCOJToOrder<0)
+            amountCOJToOrder = 0;
+
+            decimal COJPrice = 0;
+            foreach (var beverage in repo.AllInventory){
+                if(beverage.Name.CompareTo("Ceres Orange Juice")==0)
+                    COJPrice = beverage.Price;
+            }
+
+            decimal COJCost = amountCOJToOrder*COJPrice;
+
+            Console.WriteLine("R" +COJCost);
         }
 
         private static void Question6(OpenBarRepository repo)
