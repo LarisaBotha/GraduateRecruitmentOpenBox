@@ -241,7 +241,7 @@ namespace GraduateRecruitment.ConsoleApp
                             amountOfCOJ += stock.Quantity.Added;
                             amountOfCOJ -= stock.Quantity.Taken;
 
-                            /*if(amountOfFO < 0)
+                            /*if(amountOfCOJ < 0)
                             {
                                 Console.WriteLine("Error: Stock recorded incorrectly!");
                                 return;
@@ -274,6 +274,61 @@ namespace GraduateRecruitment.ConsoleApp
 
             // Write your answer to the console here.
             // Format e.g.  R{amount}
+
+            int amountOfInventory = repo.AllInventory.Count;
+            int[] quantities = new int[amountOfInventory];
+            int[] quantitiesTaken = new int[amountOfInventory];       
+            
+            for(int i=0;i<amountOfInventory;i++){
+                quantitiesTaken[i] = 0;
+            }
+
+            for(int i=0;i<amountOfInventory;i++){
+                quantities[i] = 0;
+            }
+
+            decimal totalCost = 0;
+            int monthCount = 0;
+            int currDay = repo.AllOpenBarRecords[0].Date.Day;
+            var currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
+            
+            //Assuming I do not have to take time of year into consideration
+            //Assuming records in ascending date order 
+            foreach( var item in repo.AllOpenBarRecords){
+
+                    if(item.Date>=currEndOfMonthDate){
+                        monthCount++;
+                        //Incase stock haven't changed or been recorded for a few days/weeks/months (#Covid)
+                        while(currEndOfMonthDate<=item.Date){
+                            currEndOfMonthDate = currEndOfMonthDate.AddMonths(1);
+                        }
+                    }
+
+                    foreach(var stock in item.FridgeStockTakeList){
+
+                        quantitiesTaken[stock.Inventory.Id-1] += stock.Quantity.Taken;
+                        quantities[stock.Inventory.Id-1] += stock.Quantity.Added;
+                        quantities[stock.Inventory.Id-1] -= stock.Quantity.Taken;
+
+                        /*if(quantities[stock.Inventory.Id-1]<0) {
+                            Console.WriteLine("Error: Stock recorded incorrectly!");
+                            return;
+                        }*/
+
+                    }            
+            }
+
+            foreach (var beverage in repo.AllInventory){
+                int avgUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(quantitiesTaken[beverage.Id-1]/monthCount);
+                int quanityToOrder = avgUsedPerMonth - quantities[beverage.Id-1];
+
+                if(quanityToOrder<0)
+                quanityToOrder = 0;
+                
+                totalCost += beverage.Price* quanityToOrder;
+            }
+
+            Console.WriteLine("R" +totalCost);
         }
 
         private static void Question7(OpenBarRepository repo)
