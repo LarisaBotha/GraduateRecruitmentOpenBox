@@ -31,9 +31,34 @@ namespace GraduateRecruitment.ConsoleApp
         private static void Question1(OpenBarRepository repo)
         {
             Console.WriteLine("Question 1: What is the most popular drink, including the quantity, on a Wednesday?");
-
+            
             // Write your answer to the console here.
             // Format e.g.  {inventory name}: {quantity}
+
+            int length = repo.AllInventory.Count;
+            int[] quantities = new int[length];
+            int greatestIndex = 0;
+            String greatestName = "";
+
+            for(int i=0;i<length;i++){
+                quantities[i] = 0;
+            }
+
+            foreach( var item in repo.AllOpenBarRecords){
+                if(item.DayOfWeek == DayOfWeek.Wednesday)
+                {
+                    foreach(var stock in item.FridgeStockTakeList){
+                        quantities[stock.Inventory.Id-1] += stock.Quantity.Taken;
+
+                        if(quantities[stock.Inventory.Id-1] > quantities[greatestIndex]){
+                            greatestIndex = stock.Inventory.Id-1;
+                            greatestName = stock.Inventory.Name;
+                        }
+                    }
+                }        
+            }
+
+            Console.WriteLine("{" + greatestName+ "}: {" + quantities[greatestIndex] + "}");
         }
 
         private static void Question2(OpenBarRepository repo)
