@@ -10,16 +10,19 @@ namespace GraduateRecruitment.ConsoleApp
     //TODO remove
     //TODO var names?
     class GreatestInfo {
-                public int[] quantities;
-                public int greatestIndex = 0;
-                public String greatestName = "";
+                public int[] quantitiesTaken;
+                public List<int> greatestIndex = new List<int>();        //Incase of ties
+                public List<String> greatestName = new List<String>();   //Incase of ties
 
                 public GreatestInfo(int length){
-                    quantities = new int[length];
+                    quantitiesTaken = new int[length];
 
                     for(int i=0;i<length;i++){
-                    quantities[i] = 0;
+                    quantitiesTaken[i] = 0;
                     }
+
+                     greatestIndex.Add(0);
+                     greatestName.Add("");
                 }
     }
 
@@ -116,6 +119,102 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {day of week}
             //              {inventory name}: {quantity}
+            
+            int amountOfInventory = repo.AllInventory.Count;
+            var greatestPerDay = new List<GreatestInfo>();
+
+            for(int i=0; i<7; i++){
+                greatestPerDay.Add(new GreatestInfo(amountOfInventory));
+            }
+
+            foreach( var item in repo.AllOpenBarRecords){
+
+                int dayOfWeekIndex=0;
+                switch(item.DayOfWeek){
+                case DayOfWeek.Monday: 
+                    dayOfWeekIndex = 1;
+                break;
+                case DayOfWeek.Tuesday: 
+                    dayOfWeekIndex = 2;
+                break;
+                case DayOfWeek.Wednesday: 
+                    dayOfWeekIndex = 3;
+                break;
+                case DayOfWeek.Thursday: 
+                    dayOfWeekIndex = 4;
+                break;
+                case DayOfWeek.Friday: 
+                    dayOfWeekIndex = 5;
+                break;
+                case DayOfWeek.Saturday: 
+                    dayOfWeekIndex = 6;
+                break;
+                case DayOfWeek.Sunday: 
+                    dayOfWeekIndex = 0;
+                break;
+                }
+                    foreach(var stock in item.FridgeStockTakeList){
+                        int quantityIndex = stock.Inventory.Id-1;
+
+                        if(stock.Quantity.Taken > 0){ //if quantitiesTaken dont't change then greatest evaluation can be skipped
+                            greatestPerDay[dayOfWeekIndex].quantitiesTaken[quantityIndex] += stock.Quantity.Taken;
+
+                                if( greatestPerDay[dayOfWeekIndex].greatestIndex.Count > 1 && greatestPerDay[dayOfWeekIndex].greatestIndex.Contains(quantityIndex)) //if item part of a tie and it's quantity changed then item has to be re evaluated
+                                    greatestPerDay[dayOfWeekIndex].greatestIndex.Remove(quantityIndex);   
+
+                                if(!greatestPerDay[dayOfWeekIndex].greatestIndex.Contains(quantityIndex) && greatestPerDay[dayOfWeekIndex].quantitiesTaken[quantityIndex] == greatestPerDay[dayOfWeekIndex].quantitiesTaken[greatestPerDay[dayOfWeekIndex].greatestIndex[0]]){ //a tie
+
+                                    greatestPerDay[dayOfWeekIndex].greatestIndex.Add(quantityIndex);
+                                    greatestPerDay[dayOfWeekIndex].greatestName.Add(stock.Inventory.Name);
+
+                                } else if(greatestPerDay[dayOfWeekIndex].quantitiesTaken[quantityIndex] > greatestPerDay[dayOfWeekIndex].quantitiesTaken[greatestPerDay[dayOfWeekIndex].greatestIndex[0]]){ //greater
+
+                                    greatestPerDay[dayOfWeekIndex].greatestIndex.Clear();
+                                    greatestPerDay[dayOfWeekIndex].greatestName.Clear();
+
+                                    greatestPerDay[dayOfWeekIndex].greatestIndex.Add(quantityIndex);
+                                    greatestPerDay[dayOfWeekIndex].greatestName.Add(stock.Inventory.Name);
+
+                                }
+                        }
+
+                    }
+            }
+
+            for(int j=0;j<7;j++){
+
+                DayOfWeek day = DayOfWeek.Sunday;
+                switch(j){
+                case 1: 
+                    day = DayOfWeek.Monday;
+                break;
+                case 2: 
+                    day = DayOfWeek.Tuesday;
+                break;
+                case 3: 
+                    day = DayOfWeek.Wednesday;
+                break;
+                case 4: 
+                    day = DayOfWeek.Thursday;;
+                break;
+                case 5: 
+                    day = DayOfWeek.Friday;
+                break;
+                case 6: 
+                    day = DayOfWeek.Saturday;
+                break;
+                case 0: 
+                    day = DayOfWeek.Sunday;;
+                break;
+                }
+                Console.WriteLine(day);
+
+                for( int i=0; i<greatestPerDay[j].greatestIndex.Count; i++){ 
+                    Console.WriteLine(greatestPerDay[j].greatestName[i] + ": " + greatestPerDay[j].quantitiesTaken[greatestPerDay[j].greatestIndex[i]]);
+                }
+
+                Console.WriteLine();
+            }
 
         }
 
