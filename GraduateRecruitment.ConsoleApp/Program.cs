@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using GraduateRecruitment.ConsoleApp.Data;
+using System.Collections.Generic;
 
 [assembly: InternalsVisibleTo("GraduateRecruitment.UnitTests")]
 
@@ -54,13 +55,17 @@ namespace GraduateRecruitment.ConsoleApp
             //Declarations
             int amountOfInventory = repo.AllInventory.Count;
             int[] quantitiesTaken = new int[amountOfInventory];
-            int greatestIndex = 0;
-            String greatestName = "";
+
+            var greatestIndex = new List<int>();        //Incase of ties
+            var greatestName = new List<String>();      //Incase of ties
 
             //Initialisations
             for(int i=0;i<amountOfInventory;i++){
                 quantitiesTaken[i] = 0;
             }
+
+            greatestIndex.Add(0);
+            greatestName.Add("");
 
             foreach( var item in repo.AllOpenBarRecords){
 
@@ -70,11 +75,26 @@ namespace GraduateRecruitment.ConsoleApp
                     foreach(var stock in item.FridgeStockTakeList){
                         int quantityIndex = stock.Inventory.Id-1;
 
-                        quantitiesTaken[quantityIndex] += stock.Quantity.Taken;
+                        if(stock.Quantity.Taken > 0){ //if quantitiesTaken dont't change then greatest evaluation can be skipped
+                            quantitiesTaken[quantityIndex] += stock.Quantity.Taken;
 
-                        if(quantitiesTaken[quantityIndex] > quantitiesTaken[greatestIndex]){
-                            greatestIndex = quantityIndex;
-                            greatestName = stock.Inventory.Name;
+                                if( greatestIndex.Count > 1 && greatestIndex.Contains(quantityIndex)) //if item part of a tie and it's quantity changed then item has to be re evaluated
+                                    greatestIndex.Remove(quantityIndex);   
+
+                                if(!greatestIndex.Contains(quantityIndex) && quantitiesTaken[quantityIndex] == quantitiesTaken[greatestIndex[0]]){ //a tie
+
+                                    greatestIndex.Add(quantityIndex);
+                                    greatestName.Add(stock.Inventory.Name);
+
+                                } else if(quantitiesTaken[quantityIndex] > quantitiesTaken[greatestIndex[0]]){ //greater
+
+                                    greatestIndex.Clear();
+                                    greatestName.Clear();
+
+                                    greatestIndex.Add(quantityIndex);
+                                    greatestName.Add(stock.Inventory.Name);
+
+                                }
                         }
 
                     }
@@ -83,7 +103,10 @@ namespace GraduateRecruitment.ConsoleApp
 
             }
 
-            Console.WriteLine(greatestName+ ": " + quantitiesTaken[greatestIndex]);
+            for( int i=0; i<greatestIndex.Count; i++){ 
+                Console.WriteLine(greatestName[i] + ": " + quantitiesTaken[greatestIndex[i]]);
+            }
+
         }
 
         private static void Question2(OpenBarRepository repo)
