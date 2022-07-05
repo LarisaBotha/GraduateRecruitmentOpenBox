@@ -6,6 +6,8 @@ using GraduateRecruitment.ConsoleApp.Data;
 
 namespace GraduateRecruitment.ConsoleApp
 {
+    //TODO remove
+    //TODO var names?
     class GreatestInfo {
                 public int[] quantities;
                 public int greatestIndex = 0;
