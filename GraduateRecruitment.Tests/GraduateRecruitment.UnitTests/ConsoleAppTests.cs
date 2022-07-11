@@ -9,8 +9,24 @@ namespace GraduateRecruitment.UnitTests
     [TestFixture]
     public class ConsoleAppTests
     {
-        [Test]
-        public void Question1(){
+        [TestFixture]
+        public class Question1{
+
+            [Test]
+            public void EnsureGreatest(){
+
+            }
+
+            [Test]
+            public void TestTies(){
+
+            }
+
+            [Test]
+            public void TrivialTest(){
+
+            }
+
 
         }
 

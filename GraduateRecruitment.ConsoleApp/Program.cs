@@ -7,8 +7,6 @@ using System.Collections.Generic;
 
 namespace GraduateRecruitment.ConsoleApp
 {
-    //TODO remove
-    //TODO var names?
     class GreatestInfo {
                 public int[] quantitiesTaken;
                 public List<int> greatestIndex = new List<int>();        //Incase of ties
@@ -59,8 +57,8 @@ namespace GraduateRecruitment.ConsoleApp
             int amountOfInventory = repo.AllInventory.Count;
             int[] quantitiesTaken = new int[amountOfInventory];
 
-            var greatestIndex = new List<int>();        //Incase of ties
-            var greatestName = new List<String>();      //Incase of ties
+            List<int> greatestIndex = new List<int>();        //Incase of ties
+            List<String> greatestName = new List<String>();      //Incase of ties
 
             //Initialisations
             for(int i=0;i<amountOfInventory;i++){
@@ -121,7 +119,7 @@ namespace GraduateRecruitment.ConsoleApp
             //              {inventory name}: {quantity}
             
             int amountOfInventory = repo.AllInventory.Count;
-            var greatestPerDay = new List<GreatestInfo>();
+            List<GreatestInfo> greatestPerDay = new List<GreatestInfo>();
 
             for(int i=0; i<7; i++){
                 greatestPerDay.Add(new GreatestInfo(amountOfInventory));
@@ -232,7 +230,7 @@ namespace GraduateRecruitment.ConsoleApp
 
             //Declarations and Initialisations
             int amountOfSD = 0;         //SD := Savanna Dry
-            var lastDateRecorded = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
+            DateTime lastDateRecorded = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
 
             foreach( var item in repo.AllOpenBarRecords ){
 
@@ -240,7 +238,7 @@ namespace GraduateRecruitment.ConsoleApp
 
                     if(stock.Inventory.Name.CompareTo("Savanna Dry")==0)
                     {
-                        var date = item.Date;
+                        DateTime date = item.Date;
                         
                         amountOfSD += stock.Quantity.Added;
                         amountOfSD -= stock.Quantity.Taken;
@@ -278,7 +276,7 @@ namespace GraduateRecruitment.ConsoleApp
             int daysTillSaterday = 0;
             int avgFOUsedPerWeek = 0;
             int amountFOToOrder = 0;
-            var currDay = repo.AllOpenBarRecords[0].DayOfWeek;
+            DayOfWeek currDay = repo.AllOpenBarRecords[0].DayOfWeek;
             
             switch(currDay){
                 case DayOfWeek.Monday: 
@@ -304,7 +302,7 @@ namespace GraduateRecruitment.ConsoleApp
                 break;
             }
 
-            var currEndOfWeekDate = repo.AllOpenBarRecords[0].Date.AddDays(daysTillSaterday);
+            DateTime currEndOfWeekDate = repo.AllOpenBarRecords[0].Date.AddDays(daysTillSaterday);
             
             foreach( var item in repo.AllOpenBarRecords){
 
@@ -363,7 +361,7 @@ namespace GraduateRecruitment.ConsoleApp
             int monthCount = 0;   
             decimal COJCost = 0;
             int currDay = repo.AllOpenBarRecords[0].Date.Day;
-            var currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
+            DateTime currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
 
             decimal COJPrice = 0;
             foreach (var beverage in repo.AllInventory){
@@ -439,7 +437,7 @@ namespace GraduateRecruitment.ConsoleApp
             int avgUsedPerMonth = 0;
             int quanityToOrder = 0;
             int currDay = repo.AllOpenBarRecords[0].Date.Day;
-            var currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
+            DateTime currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
             
             foreach( var item in repo.AllOpenBarRecords){
 
@@ -481,12 +479,47 @@ namespace GraduateRecruitment.ConsoleApp
             Console.WriteLine("R" +totalCost);
         }
 
+        /* Assumptions:
+            -I am not expected to design a unique way of estimating the quanitities but should rather rely on basic averaging calculations
+        */
         private static void Question7(OpenBarRepository repo)
         {
             Console.WriteLine("Question 7: We're planning a braai and expecting 100 people, how many of each drink should we order based on historical popularity of drinks?");
 
             // Write your answer to the console here.
             // Format e.g.  {inventory name}: {quantity}
+
+            int amountOfInventory = repo.AllInventory.Count;
+            int nrOfDays = repo.AllOpenBarRecords.Count;   
+            decimal[] totalQuantityTakenPerPersonPerDrink = new decimal[amountOfInventory];
+
+            for(var i=0;i<amountOfInventory;i++)
+                totalQuantityTakenPerPersonPerDrink[i] = 0;
+
+            foreach( var item in repo.AllOpenBarRecords){
+
+                int nrOfPeople = item.NumberOfPeopleInBar;
+                if(nrOfPeople>0){
+                    int[] quantitiesPerDrink = new int[amountOfInventory];
+
+                    foreach(var stock in item.FridgeStockTakeList){
+                        quantitiesPerDrink[stock.Inventory.Id-1] += stock.Quantity.Taken;
+                    }
+
+                    for(var i=0;i<amountOfInventory;i++){
+                        totalQuantityTakenPerPersonPerDrink[i] += quantitiesPerDrink[i]/nrOfPeople;
+                    }
+                }
+            }
+
+            decimal[] averageQuantityTakenPerPersonPerDrinkPerDay = new decimal[amountOfInventory];
+            for(var i=0;i<amountOfInventory;i++)
+            {
+                averageQuantityTakenPerPersonPerDrinkPerDay[i] = totalQuantityTakenPerPersonPerDrink[i]/nrOfDays;
+                Console.WriteLine(repo.AllInventory[i].Name+ ": " + Math.Round(averageQuantityTakenPerPersonPerDrinkPerDay[i]*100,2));
+            }
+
+
         }
     }
 }
