@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using GraduateRecruitment.ConsoleApp.Data;
+using GraduateRecruitment.ConsoleApp.Classes;
 using System.Collections.Generic;
+using System.Collections;
 
 [assembly: InternalsVisibleTo("GraduateRecruitment.UnitTests")]
 
@@ -23,12 +25,12 @@ namespace GraduateRecruitment.ConsoleApp
                      greatestName.Add("");
                 }
     }
-
+    
     internal class Program
     {
         internal static void Main(string[] args)
         {
-            var repo = new OpenBarRepository();
+            var repo = new OpenBarRepository(); 
 
             Question1(repo);
             Console.WriteLine(Environment.NewLine);
@@ -46,6 +48,23 @@ namespace GraduateRecruitment.ConsoleApp
             Console.WriteLine(Environment.NewLine);
         }
 
+        private static int getFirstIndex(Hashtable table){
+            ICollection keys = table.Keys;
+            int first = 0;
+            foreach(string key in keys)
+                first = (int) table[key];
+            return first;
+        }
+
+        private static int getInventoryId(OpenBarRepository repo, String inventoryName){
+            foreach( var item in repo.AllInventory){
+                if(item.Name.CompareTo(inventoryName) == 0)
+                    return item.Id;
+            }
+
+            return -1;
+        }
+
         private static void Question1(OpenBarRepository repo)
         {
             Console.WriteLine("Question 1: What is the most popular drink, including the quantity, on a Wednesday?");
@@ -53,48 +72,52 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {inventory name}: {quantity}
 
-            //Declarations
+            /*
+                Declarations
+            */
             int amountOfInventory = repo.AllInventory.Count;
             int[] quantitiesTaken = new int[amountOfInventory];
 
-            List<int> greatestIndex = new List<int>();        //Incase of ties
-            List<String> greatestName = new List<String>();      //Incase of ties
+            Hashtable greatestTable = new Hashtable();
 
-            //Initialisations
+            /*
+                Initialisations
+            */
             for(int i=0;i<amountOfInventory;i++){
                 quantitiesTaken[i] = 0;
             }
 
-            greatestIndex.Add(0);
-            greatestName.Add("");
+            greatestTable.Add("",0);
 
+            //ICollection wednesdayRecords = repo.AllOpenBarRecords.Where(record => record.DayOfWeek == DayOfWeek.Wednesday).toList();
+
+            /*
+                Stock use counting and Greatest use identification
+                    Combined for efficiency
+            */
             foreach( var item in repo.AllOpenBarRecords){
 
-                if(item.DayOfWeek == DayOfWeek.Wednesday)
-                {
+                if(item.DayOfWeek == DayOfWeek.Wednesday){  //filtering: only interested in wednesdays
 
                     foreach(var stock in item.FridgeStockTakeList){
                         int quantityIndex = stock.Inventory.Id-1;
+                        string stockName = stock.Inventory.Name;
 
-                        if(stock.Quantity.Taken > 0){ //if quantitiesTaken dont't change then greatest evaluation can be skipped
+                        if(stock.Quantity.Taken > 0){   //filtering: if quantitiesTaken dont't change then greatest evaluation can be skipped
                             quantitiesTaken[quantityIndex] += stock.Quantity.Taken;
 
-                                if( greatestIndex.Count > 1 && greatestIndex.Contains(quantityIndex)) //if item part of a tie and it's quantity changed then item has to be re evaluated
-                                    greatestIndex.Remove(quantityIndex);   
+                                if( greatestTable.Count > 1 && greatestTable.Contains(stockName))   //if item part of a tie and it's quantity changed then item has to be re-evaluated
+                                    
+                                    greatestTable.Remove(stockName);   
 
-                                if(!greatestIndex.Contains(quantityIndex) && quantitiesTaken[quantityIndex] == quantitiesTaken[greatestIndex[0]]){ //a tie
+                                if(!greatestTable.Contains(stockName) && quantitiesTaken[quantityIndex] == quantitiesTaken[getFirstIndex(greatestTable)]){  //a tie identified
+                                    
+                                    greatestTable.Add(stockName,quantityIndex);
 
-                                    greatestIndex.Add(quantityIndex);
-                                    greatestName.Add(stock.Inventory.Name);
-
-                                } else if(quantitiesTaken[quantityIndex] > quantitiesTaken[greatestIndex[0]]){ //greater
-
-                                    greatestIndex.Clear();
-                                    greatestName.Clear();
-
-                                    greatestIndex.Add(quantityIndex);
-                                    greatestName.Add(stock.Inventory.Name);
-
+                                } else if(quantitiesTaken[quantityIndex] > quantitiesTaken[getFirstIndex(greatestTable)]){  //more popular item identified
+                                    
+                                    greatestTable.Clear();
+                                    greatestTable.Add(stockName,quantityIndex);
                                 }
                         }
 
@@ -104,9 +127,12 @@ namespace GraduateRecruitment.ConsoleApp
 
             }
 
-            for( int i=0; i<greatestIndex.Count; i++){ 
-                Console.WriteLine(greatestName[i] + ": " + quantitiesTaken[greatestIndex[i]]);
-            }
+            /*
+                Output
+            */
+            ICollection greatestNames = greatestTable.Keys;
+            foreach(string name in greatestNames)
+                Console.WriteLine(name + ": " + quantitiesTaken[(int) greatestTable[name]]);
 
         }
 
@@ -120,10 +146,19 @@ namespace GraduateRecruitment.ConsoleApp
             
             int amountOfInventory = repo.AllInventory.Count;
             List<GreatestInfo> greatestPerDay = new List<GreatestInfo>();
-
+            
             for(int i=0; i<7; i++){
                 greatestPerDay.Add(new GreatestInfo(amountOfInventory));
             }
+
+            /*Hashtable dayOfWeekIndex = new Hashtable();
+            dayOfWeekIndex.Add(DayOfWeek.Monday,1);
+            dayOfWeekIndex.Add(DayOfWeek.Tuesday,2);
+            dayOfWeekIndex.Add(DayOfWeek.Wednesday,3);
+            dayOfWeekIndex.Add(DayOfWeek.Thursday,4);
+            dayOfWeekIndex.Add(DayOfWeek.Friday,5);
+            dayOfWeekIndex.Add(DayOfWeek.Saturday,6);
+            dayOfWeekIndex.Add(DayOfWeek.Sunday,0);*/
 
             foreach( var item in repo.AllOpenBarRecords){
 
@@ -216,51 +251,35 @@ namespace GraduateRecruitment.ConsoleApp
 
         }
 
-        /* Assumptions:
-            -last recorded does not refer to the las fully recorded month
-            -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
-            -the stock is taken accurately/correctly/consistently
+        /* 
+            Assumptions:
+                -last recorded does not refer to the last fully recorded month
+                -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
         */
-        private static void Question3(OpenBarRepository repo)
+        public static void Question3(OpenBarRepository repo)
         {
             Console.WriteLine("Question 3: Which dates did we run out of Savanna Dry for the last recorded month?");
 
             // Write your answer to the console here.
             // Format e.g.  {year}/{month}/{day}
 
-            //Declarations and Initialisations
-            int amountOfSD = 0;         //SD := Savanna Dry
+            StockTracker tracker = new StockTracker(repo);
+            List<DateTime> dates = tracker.getDatesByInventoryCount(getInventoryId(repo,"Savanna Dry"),0);
+
             DateTime lastDateRecorded = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
 
-            foreach( var item in repo.AllOpenBarRecords ){
+            foreach(var date in dates){
 
-                foreach(var stock in item.FridgeStockTakeList){
-
-                    if(stock.Inventory.Name.CompareTo("Savanna Dry")==0)
-                    {
-                        DateTime date = item.Date;
-                        
-                        amountOfSD += stock.Quantity.Added;
-                        amountOfSD -= stock.Quantity.Taken;
-
-                        /*if(amountOfSD < 0)
-                        {
-                            Console.WriteLine("Error: Stock recorded incorrectly!");
-                            return;
-                        }*/
-
-                        if(amountOfSD == 0 && date.Month == lastDateRecorded.Month && date.Year == lastDateRecorded.Year){
-                            Console.WriteLine(date.Year + "/" + date.Month + "/" + date.Day);
-                        }
-
-                    }
+                if(date.Year == lastDateRecorded.Year && date.Month == lastDateRecorded.Month){
+                    Console.WriteLine(date.Year+"/"+date.Month+"/"+date.Day);
                 }
             }
         }
 
-        /* Assumptions:
-            -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
-            -the stock is taken accurately/correctly/consistently
+        /*  
+            Assumptions:
+                -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
+                -I am not expected to identify half weeks in order to take their data out of the averaging calculation
         */
         private static void Question4(OpenBarRepository repo)
         {
@@ -269,10 +288,12 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {quanity}
 
-            //Declarations and Initialisations
+            /*
+                Declarations and Initialisations
+            */
             int amountOfFO = 0;
             int amountOfFOTaken = 0;       
-            int weekCount = 0;
+            int weekCount = 1;
             int daysTillSaterday = 0;
             int avgFOUsedPerWeek = 0;
             int amountFOToOrder = 0;
@@ -304,47 +325,54 @@ namespace GraduateRecruitment.ConsoleApp
 
             DateTime currEndOfWeekDate = repo.AllOpenBarRecords[0].Date.AddDays(daysTillSaterday);
             
+            /*
+                Stock Tracking and Work Week Counting
+            */
             foreach( var item in repo.AllOpenBarRecords){
 
                     if(item.Date>=currEndOfWeekDate){
                         weekCount++;
                         
-                        while(currEndOfWeekDate<=item.Date){                    //Incase stock haven't changed or been recorded for a few days/weeks (#Covid)
+                        while(currEndOfWeekDate<=item.Date){    //Incase stock haven't changed or been recorded for a few days/weeks (#Covid)
                             currEndOfWeekDate = currEndOfWeekDate.AddDays(7);
                         }
                     }
 
                     foreach(var stock in item.FridgeStockTakeList){
 
-                        if(stock.Inventory.Name.CompareTo("Fanta Orange") == 0)
-                        {
+                        if(stock.Inventory.Name.CompareTo("Fanta Orange") == 0){
                             amountOfFOTaken += stock.Quantity.Taken;
                             amountOfFO += stock.Quantity.Added;
                             amountOfFO -= stock.Quantity.Taken;
 
-                            /*if(amountOfFO < 0)
-                            {
+                            if(amountOfFO < 0){
                                 Console.WriteLine("Error: Stock recorded incorrectly!");
                                 return;
-                            }*/
+                            }
                         }
 
                     }   
 
             }
 
+            /*
+                Averaging and Other Calculations
+            */
             avgFOUsedPerWeek = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfFOTaken/weekCount); 
             amountFOToOrder = avgFOUsedPerWeek - amountOfFO;
 
-            if(amountFOToOrder<0)
+            if(amountFOToOrder<0) //when there is more than enough drinks
             amountFOToOrder = 0;
 
+            /*
+                Output
+            */
             Console.WriteLine(amountFOToOrder);
         }
 
-        /* Assumptions:
-            -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
-            -the stock is taken accurately/correctly/consistently
+        /* 
+            Assumptions:
+                -the AllOpenBarRecords-list (thus also assuming the data) is given in ascending date order
         */
         private static void Question5(OpenBarRepository repo)
         {
@@ -387,11 +415,11 @@ namespace GraduateRecruitment.ConsoleApp
                             amountOfCOJ += stock.Quantity.Added;
                             amountOfCOJ -= stock.Quantity.Taken;
 
-                            /*if(amountOfCOJ < 0)
+                            if(amountOfCOJ < 0)
                             {
                                 Console.WriteLine("Error: Stock recorded incorrectly!");
                                 return;
-                            }*/
+                            }
                         }
 
                     }            
@@ -516,7 +544,7 @@ namespace GraduateRecruitment.ConsoleApp
             for(var i=0;i<amountOfInventory;i++)
             {
                 averageQuantityTakenPerPersonPerDrinkPerDay[i] = totalQuantityTakenPerPersonPerDrink[i]/nrOfDays;
-                Console.WriteLine(repo.AllInventory[i].Name+ ": " + Math.Round(averageQuantityTakenPerPersonPerDrinkPerDay[i]*100,2));
+                Console.WriteLine(repo.AllInventory[i].Name+ ": " + GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(averageQuantityTakenPerPersonPerDrinkPerDay[i]*100));
             }
 
 
