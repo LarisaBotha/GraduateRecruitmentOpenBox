@@ -9,7 +9,7 @@ namespace GraduateRecruitment.ConsoleApp.Classes
     */
     internal class StockTracker
     {
-        private Dictionary<DateTime,int>[] inventoryData;   //Stores amount of each inventory in the fridge per day
+        private Dictionary<DateTime,int>[] inventoryData;   //Stores amount of each inventory in the fridge at the end of each day
 
         // Complexity: O(n*m(n)) where n is the amount of OpenBarRecords and m(n) the amount of StockTake entries for n
         public StockTracker(OpenBarRepository repo){
@@ -27,12 +27,17 @@ namespace GraduateRecruitment.ConsoleApp.Classes
 
                 foreach(var item in record.FridgeStockTakeList){
 
-                    int inventoryId = item.Inventory.Id-1;
+                    int inventoryIndex = item.Inventory.Id-1;
 
-                    tempStockCount[inventoryId] += item.Quantity.Added;
-                    tempStockCount[inventoryId] -= item.Quantity.Taken;
+                    tempStockCount[inventoryIndex] += item.Quantity.Added;
+                    tempStockCount[inventoryIndex] -= item.Quantity.Taken;
 
-                    inventoryData[inventoryId].Add(record.Date,tempStockCount[inventoryId]);
+                    if(tempStockCount[inventoryIndex] < 0){
+                        Console.WriteLine("Error: Stock recorded incorrectly!");
+                        Environment.Exit(0);
+                    }
+
+                    inventoryData[inventoryIndex].Add(record.Date,tempStockCount[inventoryIndex]);
                 }
             }
 
