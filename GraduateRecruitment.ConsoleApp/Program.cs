@@ -262,9 +262,10 @@ namespace GraduateRecruitment.ConsoleApp
             InventoryLibrary library = new InventoryLibrary(repo);
             StockTracker stockTracker = new StockTracker(repo);
 
-            int cojID = library.getInventoryIdByName("Ceres Orange Juice");
             DateTime lastDate = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
 
+            int cojID = library.getInventoryIdByName("Ceres Orange Juice");
+        
             int avgCOJUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt((decimal) avgCalculator.Calculate(cojID));
             int amountCOJToOrder = avgCOJUsedPerMonth -  stockTracker.getInventoryCountByDate(cojID,lastDate);
 
@@ -288,63 +289,26 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  R{amount}
 
-            int amountOfInventory = repo.AllInventory.Count;
-            int[] quantities = new int[amountOfInventory];
-            int[] quantitiesTaken = new int[amountOfInventory];       
-            
-            for(int i=0;i<amountOfInventory;i++){
-                quantitiesTaken[i] = 0;
-            }
+            AvgInventoryUsageCalculator avgCalculator = new AvgInventoryUsePerMonthCalculator(repo); //these could be passed in to question for efficiency
+            InventoryLibrary library = new InventoryLibrary(repo);
+            StockTracker stockTracker = new StockTracker(repo);
 
-            for(int i=0;i<amountOfInventory;i++){
-                quantities[i] = 0;
-            }
-
+            DateTime lastDate = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
             decimal totalCost = 0;
-            int monthCount = 0;
-            int avgUsedPerMonth = 0;
-            int quanityToOrder = 0;
-            int currDay = repo.AllOpenBarRecords[0].Date.Day;
-            DateTime currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
+
+            foreach(var inventory in repo.AllInventory){
+                int Id = inventory.Id;
+
+                int avgUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt((decimal) avgCalculator.Calculate(Id));
+                int amountToOrder = avgUsedPerMonth - stockTracker.getInventoryCountByDate(Id,lastDate);
+
+                if(amountToOrder<0) //when there is more than enough drinks
+                amountToOrder = 0;
+
+                totalCost += amountToOrder*library.getInventoryPriceById(Id);
+            }
             
-            foreach( var item in repo.AllOpenBarRecords){
-
-                    if(item.Date>=currEndOfMonthDate){
-                        monthCount++;
-                        
-                        while(currEndOfMonthDate<=item.Date){                       //Incase stock haven't changed or been recorded for a few days/weeks/months (#Covid)
-                            currEndOfMonthDate = currEndOfMonthDate.AddMonths(1);
-                        }
-                    }
-
-                    foreach(var stock in item.FridgeStockTakeList){
-                        int quanitiesIndex = stock.Inventory.Id-1;
-
-                        quantitiesTaken[quanitiesIndex] += stock.Quantity.Taken;
-                        quantities[quanitiesIndex] += stock.Quantity.Added;
-                        quantities[quanitiesIndex] -= stock.Quantity.Taken;
-
-                        /*if(quantities[quanitiesIndex]<0) {
-                            Console.WriteLine("Error: Stock recorded incorrectly!");
-                            return;
-                        }*/
-
-                    }            
-            }
-
-            foreach (var beverage in repo.AllInventory){
-                int quanitiesIndex = beverage.Id-1;
-
-                avgUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(quantitiesTaken[quanitiesIndex]/monthCount);
-                quanityToOrder = avgUsedPerMonth - quantities[quanitiesIndex];
-
-                if(quanityToOrder<0)
-                quanityToOrder = 0;
-
-                totalCost += beverage.Price* quanityToOrder;
-            }
-
-            Console.WriteLine("R" +totalCost);
+            Console.WriteLine("R"+totalCost);
         }
 
         /* Assumptions:
