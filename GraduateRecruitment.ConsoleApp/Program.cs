@@ -231,7 +231,7 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {quanity}
 
-            AvgInventoryUsePerWeekCalculator avgCalculator = new AvgInventoryUsePerWeekCalculator(repo); //these could be passed in to question for efficiency
+            AvgInventoryUsageCalculator avgCalculator = new AvgInventoryUsePerWeekCalculator(repo); //these could be passed in to question for efficiency
             InventoryLibrary library = new InventoryLibrary(repo);
             StockTracker stockTracker = new StockTracker(repo);
 
@@ -258,59 +258,22 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  R{amount}
 
-            //Declarations and Initialisations
-            int avgFOUsedPerMonth = 0;
-            int amountCOJToOrder = 0;
-            int amountOfCOJ = 0;
-            int amountOfCOJTaken = 0;       
-            int monthCount = 0;   
-            decimal COJCost = 0;
-            int currDay = repo.AllOpenBarRecords[0].Date.Day;
-            DateTime currEndOfMonthDate = repo.AllOpenBarRecords[0].Date.AddDays(-currDay).AddMonths(1);
+            AvgInventoryUsageCalculator avgCalculator = new AvgInventoryUsePerMonthCalculator(repo); //these could be passed in to question for efficiency
+            InventoryLibrary library = new InventoryLibrary(repo);
+            StockTracker stockTracker = new StockTracker(repo);
 
-            decimal COJPrice = 0;
-            foreach (var beverage in repo.AllInventory){
-                if(beverage.Name.CompareTo("Ceres Orange Juice")==0)
-                    COJPrice = beverage.Price;
-            }
+            int cojID = library.getInventoryIdByName("Ceres Orange Juice");
+            DateTime lastDate = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
 
-            foreach( var item in repo.AllOpenBarRecords){
+            int avgCOJUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt((decimal) avgCalculator.Calculate(cojID));
+            int amountCOJToOrder = avgCOJUsedPerMonth -  stockTracker.getInventoryCountByDate(cojID,lastDate);
 
-                    if(item.Date>=currEndOfMonthDate){
-                        monthCount++;
-                        
-                        while(currEndOfMonthDate<=item.Date){                       //Incase stock haven't changed or been recorded for a few days/weeks/months (#Covid)
-                            currEndOfMonthDate = currEndOfMonthDate.AddMonths(1);
-                        }
-                    }
-
-                    foreach(var stock in item.FridgeStockTakeList){
-
-                        if(stock.Inventory.Name.CompareTo("Ceres Orange Juice") == 0)
-                        {
-                            amountOfCOJTaken += stock.Quantity.Taken;
-                            amountOfCOJ += stock.Quantity.Added;
-                            amountOfCOJ -= stock.Quantity.Taken;
-
-                            if(amountOfCOJ < 0)
-                            {
-                                Console.WriteLine("Error: Stock recorded incorrectly!");
-                                return;
-                            }
-                        }
-
-                    }            
-            }
-
-            avgFOUsedPerMonth = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(amountOfCOJTaken/monthCount); 
-            amountCOJToOrder = avgFOUsedPerMonth - amountOfCOJ;
-
-            if(amountCOJToOrder<0)
+            if(amountCOJToOrder<0) //when there is more than enough drinks
             amountCOJToOrder = 0;
 
-            COJCost = amountCOJToOrder*COJPrice;
+            decimal COJCost = amountCOJToOrder*library.getInventoryPriceById(cojID);
 
-            Console.WriteLine("R" +COJCost);
+            Console.WriteLine("R"+COJCost);
         }
 
         /* Assumptions:

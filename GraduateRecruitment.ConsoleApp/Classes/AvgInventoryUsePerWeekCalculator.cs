@@ -22,8 +22,7 @@ namespace GraduateRecruitment.ConsoleApp.Classes
         }
 
         protected override DateTime findEndDate(DateTime startDate){
-          
-            //Console.WriteLine(daysTillSaturday[startDate.DayOfWeek]);
+        
             return startDate.AddDays(daysTillSaturday[startDate.DayOfWeek]);
         }
 
