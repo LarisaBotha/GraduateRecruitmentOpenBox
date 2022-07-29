@@ -4,12 +4,13 @@ using GraduateRecruitment.ConsoleApp.Data;
 
 namespace GraduateRecruitment.ConsoleApp.Classes
 {
+    /*
+        Single Responsibility: Calculate average drinks used per week for each inventory item
+    */
     class AvgInventoryUsePerWeekCalculator : AvgInventoryUsageCalculator{
 
         Dictionary<DayOfWeek,int> daysTillSaturday = new Dictionary<DayOfWeek,int>();
-        public AvgInventoryUsePerWeekCalculator(OpenBarRepository repo): base(repo) {
-            
-        }
+        public AvgInventoryUsePerWeekCalculator(OpenBarRepository repo): base(repo) {}
 
         protected override void initialise(){ //such that this code can be called before base class constructor
             daysTillSaturday.Add(DayOfWeek.Saturday,0);
