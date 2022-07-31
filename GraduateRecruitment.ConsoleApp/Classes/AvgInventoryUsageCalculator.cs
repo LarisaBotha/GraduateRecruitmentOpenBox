@@ -1,9 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using GraduateRecruitment.ConsoleApp.Data;
+
+[assembly: InternalsVisibleTo("GraduateRecruitment.UnitTests")]
 
 namespace GraduateRecruitment.ConsoleApp.Classes
 {
+    /*
+        Single Responsibility: Calculate average inventory usage per time chunk
+    */
     abstract class AvgInventoryUsageCalculator{
 
         private OpenBarRepository repository;
@@ -18,7 +24,6 @@ namespace GraduateRecruitment.ConsoleApp.Classes
             /*
                 Initialisations
             */
-
             initialise();
 
             DateTime firstDate = repository.AllOpenBarRecords[0].Date;
@@ -27,11 +32,13 @@ namespace GraduateRecruitment.ConsoleApp.Classes
             Dictionary<int,int> tempInventoryCount = new Dictionary<int,int>();
 
             foreach(var inventory in repository.AllInventory){
+
                 int id = inventory.Id;
                 tempInventoryCount.Add(id,0);
 
                 inventoryUsed.Add(id,new List<int>()); 
                 inventoryQs.Add(id,new Tuple<decimal, decimal>(0,0));   
+
             }
 
             /*
@@ -39,7 +46,7 @@ namespace GraduateRecruitment.ConsoleApp.Classes
             */
             foreach(var record in repository.AllOpenBarRecords){
 
-                if(record.Date>=currEndDate){
+                if(record.Date>=currEndDate){ //new "time chunk"
 
                     foreach(var inventory in repository.AllInventory){
 
@@ -50,36 +57,54 @@ namespace GraduateRecruitment.ConsoleApp.Classes
                     }
             
                     while(currEndDate<=record.Date){    //Incase stock haven't changed or been recorded for a few days/weeks/months/years (#Covid)
+                        
                         currEndDate = updateEndDate(currEndDate);
+
                     }
                 }
 
-                foreach(var item in record.FridgeStockTakeList){
+                foreach(var item in record.FridgeStockTakeList){ //count all in "time chunk"
+
                     tempInventoryCount[item.Inventory.Id] += item.Quantity.Taken;
+
                 }   
 
             }
 
             calculateQuartiles();
+            
         }
 
         //Complexity: O(n) where n is the amount of "time chunks" (eg weeks,months,years) in the time frame of the repository data
         public decimal Calculate(int inventoryId){
 
+            /* 
+                Sum inventory usage excluding outliers
+            */
             int sum = 0;
+
             foreach( var item in inventoryUsed[inventoryId].ToArray()){
 
-                if(isOutlier(inventoryId,item)){    //weeks with a few public holidays will affect the normal usage rate of inventory and is therefore excluded
+                if(isOutlier(inventoryId,item)){    //abnormal time chunks will affect the normal usage rate of inventory and is therefore excluded
+                    
                     inventoryUsed[inventoryId].Remove(item);
+
                 } else{
+
                     sum += item;
+
                 }
             }
+
+            /*  
+                Average each inventory item per "time chunk"
+            */
             decimal avg = sum/inventoryUsed[inventoryId].Count; 
             return avg;
+
         }
 
-        private void calculateQuartiles(){
+        protected internal void calculateQuartiles(){
 
            foreach(var inventory in repository.AllInventory){
 
@@ -101,17 +126,25 @@ namespace GraduateRecruitment.ConsoleApp.Classes
                 decimal q3;
 
                 if(q1Index - Math.Floor(q1Index) == 0.5){
+
                     q1 = (inventoryUsedArray[(int) Math.Floor(q1Index)] + inventoryUsedArray[(int) Math.Ceiling(q1Index)])/2;
+                
                 }else{
+
                     q1Index = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt((decimal) q1Index);
                     q1 = inventoryUsedArray[(int) q1Index];
+
                 }
 
                 if(q3Index - Math.Floor(q3Index) == 0.5){
+
                     q3 = (inventoryUsedArray[(int) Math.Floor(q3Index)] + inventoryUsedArray[(int) Math.Ceiling(q3Index)])/2;
+                
                 }else{
+
                     q3Index = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt((decimal) q3Index);
                     q3 = inventoryUsedArray[(int) q1Index];
+
                 }
 
                 /*
@@ -119,28 +152,37 @@ namespace GraduateRecruitment.ConsoleApp.Classes
                 */
                 inventoryQs[inventory.Id] = new Tuple<decimal,decimal>(q1,q3);
            }
+
         }
 
-        private bool isOutlier(int inventoryId, int item){
+        protected internal bool isOutlier(int inventoryId, int item){
 
+            /*
+                Determine whether the "time chunk's" inventor usage is
+                between q1-1.5(q3-q1) and q3+1.5(q3-q1) or not
+            */
             decimal q1 = inventoryQs[inventoryId].Item1;
             decimal q3 = inventoryQs[inventoryId].Item2;
             decimal iqr15 = (decimal) 1.5*(q3-q1);
 
             if(item < (q1 - iqr15) || item > (q3 + iqr15)){
+
                 return true;
+
             } else {
+
                 return false;
+
             }
+
         }
 
     protected abstract DateTime findEndDate(DateTime startDate);
 
     protected abstract DateTime updateEndDate(DateTime currEndDate);
 
-    protected virtual void initialise(){}
+    protected virtual void initialise(){} //incase a derived class has to be initialised before the base class's constructor is executed
 
     }
-
-    
+   
 }

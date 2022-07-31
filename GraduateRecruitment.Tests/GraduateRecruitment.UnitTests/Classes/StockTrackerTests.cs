@@ -13,67 +13,77 @@ namespace GraduateRecruitment.UnitTests.Classes
     {
         
         [Test]
-        public void getInventoryCountByDate()
-        {
+        public void getInventoryCountByDate(){
+
             var repo = new OpenBarRepository(); 
-            DateTime lastDateRecorded = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
+          
             int amount = 0;
             int amountOfInventory = repo.AllInventory.Count;
             int randomId = (new Random()).Next(1,amountOfInventory);
+            DateTime lastDateRecorded = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
+            StockTracker stockTracker = new StockTracker(repo);
 
             foreach(var record in repo.AllOpenBarRecords){
 
                 foreach(var item in record.FridgeStockTakeList){
 
                     if(item.Inventory.Id == randomId){ //one inventory test is sufficient as they are all calculated over the same code
+                       
                         amount += item.Quantity.Added;
                         amount -= item.Quantity.Taken;
+                    
                     }
 
                 }
+
             }
 
-            var stockTracker = new StockTracker(repo);
+            stockTracker.getInventoryCountByDate(randomId,lastDateRecorded).Should().Be(amount);
 
-            using (new AssertionScope()){
-                stockTracker.getInventoryCountByDate(randomId,lastDateRecorded).Should().Be(amount);
-            }
         }
 
         [Test]
         public void getDatesByInventoryCount(){
 
             var repo = new OpenBarRepository(); 
+
             DateTime lastDateRecorded = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
             DateTime firstDateRecorded = repo.AllOpenBarRecords[0].Date;
+
             double dayCount = (lastDateRecorded-firstDateRecorded).TotalDays;
             DateTime halfwayDate = firstDateRecorded.AddDays(dayCount/2);
+
             int amount = 0;
             int amountOfInventory = repo.AllInventory.Count;
             int randomId = (new Random()).Next(1,amountOfInventory);
+
+            var stockTracker = new StockTracker(repo);
 
             foreach(var record in repo.AllOpenBarRecords){
 
                 foreach(var item in record.FridgeStockTakeList){
 
                     if(item.Inventory.Id == randomId){ //one inventory test is sufficient as they are all calculated over the same code
+                        
                         amount += item.Quantity.Added;
                         amount -= item.Quantity.Taken;
+
                     }
 
                 }
 
                 if(record.Date == halfwayDate){
-                    break;
-                }
-            }
 
-            var stockTracker = new StockTracker(repo);
+                    break;
+
+                }
+
+            }
+     
             List<DateTime> tempList = stockTracker.getDatesByInventoryCount(randomId,amount);
 
-            using (new AssertionScope()){
-                tempList.Contains(halfwayDate).Should().Be(true);
-            }
+            tempList.Contains(halfwayDate).Should().Be(true);
+            
         }
 
         [Test]
@@ -99,7 +109,7 @@ namespace GraduateRecruitment.UnitTests.Classes
             }
 
         }
-    }
 
-    
+    }
+   
 }

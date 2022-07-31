@@ -18,7 +18,9 @@ namespace GraduateRecruitment.ConsoleApp.Classes
             inventoryData = new Dictionary<DateTime,int>[amountOfInventory];
 
             for(int i=0;i<amountOfInventory;i++){
+
                 inventoryData[i] = new Dictionary<DateTime, int>();
+
             }
 
             int[] tempStockCount = new int[amountOfInventory];
@@ -33,36 +35,51 @@ namespace GraduateRecruitment.ConsoleApp.Classes
                     tempStockCount[inventoryIndex] -= item.Quantity.Taken;
 
                     if(tempStockCount[inventoryIndex] < 0){
+
                         Console.WriteLine("Error: Stock recorded incorrectly!");
                         Environment.Exit(0);
+                        
                     }
 
-                    inventoryData[inventoryIndex].Add(record.Date,tempStockCount[inventoryIndex]);
+                    inventoryData[inventoryIndex].Add(record.Date,tempStockCount[inventoryIndex]); //TODO (Larisa): What if the same inventory item has two stock-take entries on the same day?
+                
                 }
-            }
 
+            }
+            
         }
 
         //Complexity: O(1)
         public int getInventoryCountByDate(int inventoryId, DateTime date){
+
             return (int) inventoryData[inventoryId-1][date];
+
         }
 
         //Complexity: O(n) where n is the number of days for which stock was recorded
         public List<DateTime> getDatesByInventoryCount(int inventoryId, int inventoryCount){
+
             return KeysByValue(inventoryData[inventoryId-1],inventoryCount);
+
         }
 
         public static List<T> KeysByValue<T,V>( Dictionary<T,V> dict, V value){
 
             List<T> keys = new List<T>();
             foreach( var pair in dict){
+
                 if (EqualityComparer<V>.Default.Equals(pair.Value, value)){
+
                     keys.Add(pair.Key);
+
                 }
+
             }
             return keys;
+
         }
+
     }
+
 }
 
