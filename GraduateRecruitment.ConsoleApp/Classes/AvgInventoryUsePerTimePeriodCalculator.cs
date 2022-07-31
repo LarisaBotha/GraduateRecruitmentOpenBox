@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using GraduateRecruitment.ConsoleApp.Data;
+using GraduateRecruitment.ConsoleApp.Data.Models;
 
 [assembly: InternalsVisibleTo("GraduateRecruitment.UnitTests")]
 
@@ -57,7 +58,7 @@ namespace GraduateRecruitment.ConsoleApp.Classes
 
                         int id = inventory.Id;
 
-                        tempInventoryCount[id] = manipulateInventoryCount(record.NumberOfPeopleInBar,tempInventoryCount[id]);
+                        tempInventoryCount[id] = manipulateInventoryCount(record,tempInventoryCount[id]);
                         inventoryUsed[id].Add(tempInventoryCount[id]);
 
                         tempInventoryCount[id] = 0.0m; //Reset for new "time chunk"
@@ -189,7 +190,7 @@ namespace GraduateRecruitment.ConsoleApp.Classes
 
         protected virtual void initialise(){} //incase a derived class has to be initialised before the base class's constructor is executed
 
-        protected virtual decimal manipulateInventoryCount(int nrPeople,decimal tempInventoryCount){
+        protected virtual decimal manipulateInventoryCount(OpenBarRecord record,decimal tempInventoryCount){
             return tempInventoryCount;
         }
 

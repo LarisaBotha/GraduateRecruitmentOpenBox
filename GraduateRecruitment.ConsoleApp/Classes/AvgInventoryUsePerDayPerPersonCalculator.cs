@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Generic;
 using GraduateRecruitment.ConsoleApp.Data;
+using GraduateRecruitment.ConsoleApp.Data.Models;
 
 /*
     Note: 
@@ -17,10 +17,11 @@ namespace GraduateRecruitment.ConsoleApp.Classes
 
         public AvgInventoryUsePerDayPerPesonCalculator(OpenBarRepository repo): base(repo) {}
 
-        protected override decimal manipulateInventoryCount(int nrPeople,decimal tempInventoryCount){
+        protected override decimal manipulateInventoryCount(OpenBarRecord record,decimal tempInventoryCount){
             
-            if(nrPeople != 0)
-                return Decimal.Divide(tempInventoryCount,nrPeople);
+            int nrOfPeople = record.NumberOfPeopleInBar;
+            if(nrOfPeople != 0)
+                return Decimal.Divide(tempInventoryCount,nrOfPeople);
             else
                 return 0;
 
