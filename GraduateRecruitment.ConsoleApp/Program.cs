@@ -231,7 +231,7 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {quanity}
 
-            AvgInventoryUsageCalculator avgCalculator = new AvgInventoryUsePerWeekCalculator(repo); //these could be passed in to question for efficiency
+            AvgInventoryUsePerTimePeriodCalculator avgCalculator = new AvgInventoryUsePerWeekCalculator(repo); //these could be passed in to question for efficiency
             InventoryLibrary library = new InventoryLibrary(repo);
             StockTracker stockTracker = new StockTracker(repo);
 
@@ -258,7 +258,7 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  R{amount}
 
-            AvgInventoryUsageCalculator avgCalculator = new AvgInventoryUsePerMonthCalculator(repo); //these could be passed in to question for efficiency
+            AvgInventoryUsePerTimePeriodCalculator avgCalculator = new AvgInventoryUsePerMonthCalculator(repo); //these could be passed in to question for efficiency
             InventoryLibrary library = new InventoryLibrary(repo);
             StockTracker stockTracker = new StockTracker(repo);
 
@@ -289,7 +289,7 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  R{amount}
 
-            AvgInventoryUsageCalculator avgCalculator = new AvgInventoryUsePerMonthCalculator(repo); //these could be passed in to question for efficiency
+            AvgInventoryUsePerTimePeriodCalculator avgCalculator = new AvgInventoryUsePerMonthCalculator(repo); //these could be passed in to question for efficiency
             InventoryLibrary library = new InventoryLibrary(repo);
             StockTracker stockTracker = new StockTracker(repo);
 
@@ -321,34 +321,23 @@ namespace GraduateRecruitment.ConsoleApp
             // Write your answer to the console here.
             // Format e.g.  {inventory name}: {quantity}
 
-            int amountOfInventory = repo.AllInventory.Count;
-            int nrOfDays = repo.AllOpenBarRecords.Count;   
-            decimal[] totalQuantityTakenPerPersonPerDrink = new decimal[amountOfInventory];
+            AvgInventoryUsePerTimePeriodCalculator avgCalculator = new AvgInventoryUsePerDayPerPesonCalculator(repo);
+            InventoryLibrary library = new InventoryLibrary(repo);
+            StockTracker stockTracker = new StockTracker(repo);
 
-            for(var i=0;i<amountOfInventory;i++)
-                totalQuantityTakenPerPersonPerDrink[i] = 0;
+            DateTime lastDate = repo.AllOpenBarRecords[repo.AllOpenBarRecords.Count-1].Date;
 
-            foreach( var item in repo.AllOpenBarRecords){
+            foreach(var inventory in repo.AllInventory){
+                int Id = inventory.Id;
 
-                int nrOfPeople = item.NumberOfPeopleInBar;
-                if(nrOfPeople>0){
-                    int[] quantitiesPerDrink = new int[amountOfInventory];
+                decimal avgUsedPerDayPerPerson = avgCalculator.Calculate(Id);
+                int avgUsedPerDayPer100Persons = GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(100*avgUsedPerDayPerPerson);
+                int amountToOrder = avgUsedPerDayPer100Persons - stockTracker.getInventoryCountByDate(Id,lastDate);
 
-                    foreach(var stock in item.FridgeStockTakeList){
-                        quantitiesPerDrink[stock.Inventory.Id-1] += stock.Quantity.Taken;
-                    }
+                if(amountToOrder<0) //when there is more than enough drinks
+                amountToOrder = 0;
 
-                    for(var i=0;i<amountOfInventory;i++){
-                        totalQuantityTakenPerPersonPerDrink[i] += quantitiesPerDrink[i]/nrOfPeople;
-                    }
-                }
-            }
-
-            decimal[] averageQuantityTakenPerPersonPerDrinkPerDay = new decimal[amountOfInventory];
-            for(var i=0;i<amountOfInventory;i++)
-            {
-                averageQuantityTakenPerPersonPerDrinkPerDay[i] = totalQuantityTakenPerPersonPerDrink[i]/nrOfDays;
-                Console.WriteLine(repo.AllInventory[i].Name+ ": " + GraduateRecruitment.ConsoleApp.Extensions.DecimalExtensions.RoundToInt(averageQuantityTakenPerPersonPerDrinkPerDay[i]*100));
+                Console.WriteLine(library.getInventoryNameById(Id)+": "+amountToOrder);
             }
 
 

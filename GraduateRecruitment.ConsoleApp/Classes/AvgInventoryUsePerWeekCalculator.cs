@@ -7,7 +7,7 @@ namespace GraduateRecruitment.ConsoleApp.Classes
     /*
         Single Responsibility: Calculate average drinks used per week for each inventory item
     */
-    class AvgInventoryUsePerWeekCalculator : AvgInventoryUsageCalculator{
+    class AvgInventoryUsePerWeekCalculator : AvgInventoryUsePerTimePeriodCalculator{
 
         Dictionary<DayOfWeek,int> daysTillSaturday = new Dictionary<DayOfWeek,int>();
 

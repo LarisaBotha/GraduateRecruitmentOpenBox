@@ -6,7 +6,7 @@ namespace GraduateRecruitment.ConsoleApp.Classes
     /*
         Single Responsibility: Calculate average drinks used per month for each inventory item
     */
-    class AvgInventoryUsePerMonthCalculator : AvgInventoryUsageCalculator{
+    class AvgInventoryUsePerMonthCalculator : AvgInventoryUsePerTimePeriodCalculator{
 
         public AvgInventoryUsePerMonthCalculator(OpenBarRepository repo): base(repo) {}
 
